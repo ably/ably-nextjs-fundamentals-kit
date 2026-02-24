@@ -18,7 +18,7 @@
     "eslint": "8.50.0",
     "flowbite": "^1.8.1",
     "flowbite-react": "^0.6.1",
-    "next": "^14.1.4",
+    "next": "^15.5.10",
     "random-names-generator": "^1.0.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
