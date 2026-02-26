@@ -3,39 +3,53 @@
 import * as Ably from 'ably';
 import { AblyProvider, ChannelProvider, useChannel } from "ably/react"
 import { MouseEventHandler, MouseEvent, useState } from 'react'
-import Logger, { LogEntry } from '../../components/logger';
-import SampleHeader from '../../components/SampleHeader';
+import { Radio, Send, Server, MessageSquare } from 'lucide-react'
+import { motion } from 'motion/react'
+import PageHeader from '../../components/PageHeader';
+import FeatureCard from '../../components/FeatureCard';
 
 export default function PubSubClient() {
-
   const client = new Ably.Realtime ({ authUrl: '/token', authMethod: 'POST' });
 
   return (
     <AblyProvider client={ client }>
       <ChannelProvider channelName="status-updates">
-        <div className="flex flex-row justify-center">
-          <div className="flex flex-col justify-start items-start gap-10">
-            <SampleHeader sampleName="Pub/Sub Channels" sampleIcon="PubSubChannels.svg" sampleDocsLink="https://ably.com/docs/getting-started/react#useChannel" />
-            <div className="font-manrope text-base max-w-screen-sm text-slate-800 text-opacity-100 leading-6 font-light">
-              Publish messages on channels and subscribe to channels to receive messages. Click&nbsp;<span className="font-medium">Publish from Client</span>&nbsp;to publish a message on a channel from the web browser client. Click&nbsp;<span className="font-medium">Publish from Server</span>&nbsp;to publish a message from a serverless function.
-            </div>
+        <div className="px-6 py-16">
+          <div className="max-w-6xl mx-auto">
+            <PageHeader
+              icon={Radio}
+              title="Pub/Sub Channels"
+              description="Publish messages and subscribe to real-time updates"
+              docsLink="https://ably.com/docs/getting-started/react#useChannel"
+              accentColor="purple"
+            />
             <PubSubMessages />
-          </div>      
+          </div>
         </div>
       </ChannelProvider>
     </AblyProvider>
   )
 }
 
-function PubSubMessages() {
+interface PubSubMessage {
+  id: string
+  text: string
+  source: 'client' | 'server'
+  timestamp: string
+}
 
-  const [logs, setLogs] = useState<Array<LogEntry>>([])
+function PubSubMessages() {
+  const [messages, setMessages] = useState<Array<PubSubMessage>>([])
 
   const { channel } = useChannel("status-updates", (message: Ably.Message) => {
-    setLogs(prev => [...prev, new LogEntry(`✉️ event name: ${message.name} text: ${message.data.text}`)])
+    const source = message.name === 'update-from-client' ? 'client' : 'server' as const
+    setMessages(prev => [
+      { id: `${Date.now()}-${source}`, text: message.data.text, source, timestamp: new Date().toISOString() },
+      ...prev,
+    ])
   });
-  
-  const [messageText, setMessageText] = useState<string>('A message')
+
+  const [messageText, setMessageText] = useState<string>('Hello world')
 
   const publicFromClientHandler: MouseEventHandler = (_event: MouseEvent<HTMLButtonElement>) => {
     if(channel === null) return
@@ -53,26 +67,134 @@ function PubSubMessages() {
   }
 
   return (
-    <>
-      <div className="flex flex-col justify-start items-start gap-4 h-[138px]">
-        <div className="font-manrope text-sm min-w-[113px] whitespace-nowrap text-black text-opacity-100 leading-4 uppercase tracking-widest font-medium">
-          <span className="uppercase">Message text</span>
-        </div>
-        <input className="font-manrope px-3 rounded-md items-center text-base min-w-[720px] w-[752px] whitespace-nowrap text-zinc-800 text-opacity-100 leading-6 font-light h-12 border-zinc-300 border-solid border bg-neutral-100" value={messageText}  onChange={e => setMessageText(e.target.value)} />
-        <div className="flex flex-row justify-start items-start gap-4 w-[368px]">
-          <div className="flex justify-center items-center rounded-md w-44 h-10 bg-black">
-            <div className="font-manrope text-base min-w-[136px] whitespace-nowrap text-white text-opacity-100 leading-4 font-medium">
-              <button onClick={publicFromClientHandler}>Publish from Client</button>
+    <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+      {/* Compose Panel */}
+      <motion.div
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.2 }}
+        className="lg:col-span-2"
+      >
+        <FeatureCard className="sticky top-24">
+          <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+            <MessageSquare className="w-5 h-5 text-purple-400" />
+            Compose Message
+          </h2>
+
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-semibold text-gray-400 mb-3 uppercase tracking-wider">
+                Message Content
+              </label>
+              <textarea
+                rows={4}
+                className="w-full px-4 py-3 bg-slate-950/50 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-purple-500/50 transition-colors resize-none font-manrope"
+                value={messageText}
+                onChange={e => setMessageText(e.target.value)}
+                placeholder="Type your message..."
+              />
+            </div>
+
+            <div className="space-y-3">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={publicFromClientHandler}
+                className="w-full py-3.5 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-xl font-bold transition-all shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2"
+              >
+                <Send className="w-4 h-4" />
+                Publish from Client
+              </motion.button>
+
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={publicFromServerHandler}
+                className="w-full py-3.5 bg-slate-800 hover:bg-slate-700 text-white border border-white/10 rounded-xl font-bold transition-all flex items-center justify-center gap-2"
+              >
+                <Server className="w-4 h-4" />
+                Publish from Server
+              </motion.button>
+            </div>
+
+            {/* Stats */}
+            <div className="grid grid-cols-2 gap-3 pt-6 border-t border-white/5">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-white">{messages.filter(m => m.source === 'client').length}</div>
+                <div className="text-xs text-gray-500 uppercase">Client</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-white">{messages.filter(m => m.source === 'server').length}</div>
+                <div className="text-xs text-gray-500 uppercase">Server</div>
+              </div>
             </div>
           </div>
-          <div className="flex justify-center items-center rounded-md w-44 h-10 bg-black">
-            <div className="font-manrope text-base min-w-[136px] whitespace-nowrap text-white text-opacity-100 leading-4 font-medium">
-              <button onClick={publicFromServerHandler}>Publish from Server</button>
-            </div>
+        </FeatureCard>
+      </motion.div>
+
+      {/* Message Stream */}
+      <motion.div
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.3 }}
+        className="lg:col-span-3"
+      >
+        <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl border border-white/5 overflow-hidden">
+          <div className="bg-slate-950/50 px-6 py-4 border-b border-white/5">
+            <h2 className="text-lg font-bold text-white">Message Stream</h2>
+            <p className="text-sm text-gray-500">{messages.length} messages published</p>
+          </div>
+
+          <div className="p-6 space-y-3 max-h-[600px] overflow-y-auto">
+            {messages.length === 0 ? (
+              <div className="text-center py-16">
+                <Radio className="w-12 h-12 text-gray-700 mx-auto mb-4" />
+                <p className="text-gray-500">No messages yet</p>
+                <p className="text-sm text-gray-600 mt-1">Publish a message to see it here</p>
+              </div>
+            ) : (
+              messages.map((msg) => (
+                <motion.div
+                  key={msg.id}
+                  initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  transition={{ delay: 0.05 }}
+                  className={`p-4 rounded-xl border ${
+                    msg.source === 'client'
+                      ? 'bg-purple-500/5 border-purple-500/20'
+                      : 'bg-blue-500/5 border-blue-500/20'
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className={`p-2 rounded-lg ${
+                      msg.source === 'client' ? 'bg-purple-500/10' : 'bg-blue-500/10'
+                    }`}>
+                      {msg.source === 'client' ? (
+                        <Send className="w-4 h-4 text-purple-400" />
+                      ) : (
+                        <Server className="w-4 h-4 text-blue-400" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`text-xs font-bold uppercase ${
+                          msg.source === 'client' ? 'text-purple-400' : 'text-blue-400'
+                        }`}>
+                          {msg.source}
+                        </span>
+                        <span className="text-xs text-gray-600">
+                          {new Date(msg.timestamp).toLocaleTimeString()}
+                        </span>
+                      </div>
+                      <p className="text-white break-words">{msg.text}</p>
+                    </div>
+                  </div>
+                </motion.div>
+              ))
+            )}
           </div>
         </div>
-      </div>
-      <Logger logEntries={logs}  displayHeader={true}  />
-    </>
+      </motion.div>
+    </div>
   )
 }
