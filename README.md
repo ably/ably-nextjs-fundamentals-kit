@@ -18,6 +18,12 @@ The project uses the following components:
 - [Next.js](https://nextjs.org), a flexible React framework that gives you building blocks to create fast web applications.
 - [Ably](https://ably.com?utm_source=github&utm_medium=github-repo&utm_campaign=GLB-2211-ably-nextjs-fundamentals-kit&utm_content=ably-nextjs-fundamentals-kit&src=GLB-2211-ably-nextjs-fundamentals-kit-github-repo), for realtime messaging at scale.
 
+## Netlify and Vercel
+
+You can check out the live demo of this app on [Vercel](https://ably-nextjs-fundamentals-kit-one.vercel.app/) or [Netlify](https://ably-nextjs-fundamentals-kit.netlify.app/).
+
+See below for instructions on how to build and deploy this app yourself.
+
 ## Building & running locally
 
 ### Prerequisites
@@ -47,7 +53,7 @@ This app can be deployed to either Vercel or Netlify. The codebase is identical 
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fably-labs%2Fably-nextjs-fundamentals-kit&env=ABLY_API_KEY)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fably%2Fably-nextjs-fundamentals-kit&env=ABLY_API_KEY)
 
 1. Click the **Deploy with Vercel** button above.
 2. Set the `ABLY_API_KEY` environment variable when prompted.
@@ -57,7 +63,7 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 
 You can deploy this app to [Netlify](https://www.netlify.com) using the button below. Netlify uses the `@netlify/plugin-nextjs` plugin (included in `devDependencies`) to handle Next.js server-side features such as API routes.
 
-[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/ably-labs/ably-nextjs-fundamentals-kit)
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https%3A%2F%2Fgithub.com%2Fably%2Fably-nextjs-fundamentals-kit)
 
 1. Click the **Deploy to Netlify** button above.
 2. Connect your GitHub account and authorize Netlify to clone the repo.
