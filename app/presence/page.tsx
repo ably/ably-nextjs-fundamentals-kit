@@ -1,5 +1,5 @@
-import PresenceWrapper from './presence-wrapper'
+import Presence from './presence-client'
 
 export default function PresencePage() {
-  return <PresenceWrapper />
+  return <Presence />
 }

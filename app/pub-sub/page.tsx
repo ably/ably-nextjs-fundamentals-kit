@@ -1,5 +1,5 @@
-import PubSubWrapper from './pubsub-wrapper'
+import PubSubClient from './pubsub-client'
 
 export default function PubSubPage() {
-  return <PubSubWrapper />
+  return <PubSubClient />
 }

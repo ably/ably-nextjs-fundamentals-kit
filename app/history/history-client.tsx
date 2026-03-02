@@ -3,12 +3,37 @@
 import * as Ably from 'ably';
 import { AblyProvider, ChannelProvider, useChannel } from "ably/react"
 import { useState, useEffect } from 'react'
-import { Clock, AlertCircle, ArrowRight, ExternalLink, Database, Sparkles, Send, Server } from 'lucide-react'
+import { Clock, AlertCircle, ArrowRight, ExternalLink, Database, Sparkles, Send, Server, Loader2 } from 'lucide-react'
 import { motion } from 'motion/react'
 import PageHeader from '../../components/PageHeader';
 
 export default function History() {
-  const client = new Ably.Realtime ({ authUrl:'/token', authMethod: 'POST' });
+  const [client, setClient] = useState<Ably.Realtime | null>(null);
+
+  useEffect(() => {
+    const ably = new Ably.Realtime({ authUrl: '/token', authMethod: 'POST' });
+    setClient(ably);
+    return () => { ably.close(); };
+  }, []);
+
+  if (!client) {
+    return (
+      <div className="px-6 py-16">
+        <div className="max-w-6xl mx-auto">
+          <PageHeader
+            icon={Clock}
+            title="History"
+            description="Retrieve historical messages from your channels"
+            docsLink="https://ably.com/docs/storage-history/history?lang=javascript"
+            accentColor="amber"
+          />
+          <div className="flex items-center justify-center py-24">
+            <Loader2 className="w-8 h-8 text-amber-400 animate-spin" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <AblyProvider client={ client }>

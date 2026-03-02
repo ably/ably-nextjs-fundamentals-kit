@@ -1,15 +1,40 @@
 'use client'
 
-import { MouseEventHandler, MouseEvent, useState } from 'react'
+import { MouseEventHandler, MouseEvent, useState, useEffect } from 'react'
 import * as Ably from 'ably'
 import { AblyProvider, useAbly, useConnectionStateListener } from 'ably/react'
-import { Shield, CheckCircle2, XCircle, Sparkles } from 'lucide-react'
+import { Shield, CheckCircle2, XCircle, Sparkles, Loader2 } from 'lucide-react'
 import { motion } from 'motion/react'
 import PageHeader from '../../components/PageHeader'
 import FeatureCard from '../../components/FeatureCard'
 
 export default function Authentication() {
-  const client = new Ably.Realtime({ authUrl: '/token', authMethod: 'POST' });
+  const [client, setClient] = useState<Ably.Realtime | null>(null);
+
+  useEffect(() => {
+    const ably = new Ably.Realtime({ authUrl: '/token', authMethod: 'POST' });
+    setClient(ably);
+    return () => { ably.close(); };
+  }, []);
+
+  if (!client) {
+    return (
+      <div className="px-6 py-16">
+        <div className="max-w-6xl mx-auto">
+          <PageHeader
+            icon={Shield}
+            title="Authentication"
+            description="Establish a secure, persistent bi-directional connection"
+            docsLink="https://ably.com/docs/getting-started/react#authenticate"
+            accentColor="cyan"
+          />
+          <div className="flex items-center justify-center py-24">
+            <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <AblyProvider client={ client }>

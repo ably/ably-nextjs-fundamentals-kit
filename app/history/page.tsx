@@ -1,5 +1,5 @@
-import HistoryWrapper from './history-wrapper'
+import History from './history-client'
 
 export default function HistoryPage() {
-  return <HistoryWrapper />
+  return <History />
 }

@@ -3,8 +3,8 @@
 import * as Ably from 'ably';
 import names from 'random-names-generator'
 import { AblyProvider, ChannelProvider, usePresence, usePresenceListener } from "ably/react"
-import { useState, ReactElement, FC } from 'react'
-import { Users, UserPlus, UserMinus, Activity } from 'lucide-react'
+import { useState, useEffect, ReactElement, FC } from 'react'
+import { Users, UserPlus, UserMinus, Activity, Loader2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'motion/react'
 import PageHeader from '../../components/PageHeader';
 import FeatureCard from '../../components/FeatureCard';
@@ -20,11 +20,35 @@ const avatarColors = [
 export default function Presence() {
   const [randomName] = useState(names.random());
   const [isOnline, setIsOnline] = useState(false)
+  const [client, setClient] = useState<Ably.Realtime | null>(null);
 
-  const client = new Ably.Realtime ({ authUrl:'/token', authMethod: 'POST', clientId: randomName });
+  useEffect(() => {
+    const ably = new Ably.Realtime({ authUrl: '/token', authMethod: 'POST', clientId: randomName });
+    setClient(ably);
+    return () => { ably.close(); };
+  }, [randomName]);
 
   function toggleState(val: boolean) {
     setIsOnline(val)
+  }
+
+  if (!client) {
+    return (
+      <div className="px-6 py-16">
+        <div className="max-w-6xl mx-auto">
+          <PageHeader
+            icon={Users}
+            title="Presence"
+            description="Track who's online in real-time"
+            docsLink="https://ably.com/docs/getting-started/react#usePresence"
+            accentColor="green"
+          />
+          <div className="flex items-center justify-center py-24">
+            <Loader2 className="w-8 h-8 text-green-400 animate-spin" />
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
