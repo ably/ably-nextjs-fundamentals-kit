@@ -3,11 +3,15 @@
 import * as Ably from 'ably';
 import { AblyProvider, ChannelProvider, useChannel } from "ably/react"
 import { useState, useEffect } from 'react'
-import { Clock, AlertCircle, ArrowRight, ExternalLink, Database, Sparkles, Send, Server, Loader2 } from 'lucide-react'
+import { Clock, AlertCircle, ArrowRight, ExternalLink, Database, Sparkles, Send, Server } from 'lucide-react'
 import { motion } from 'motion/react'
 import PageHeader from '../../components/PageHeader';
 
-export default function History() {
+interface HistoryProps {
+  initialHistory: Array<HistoryMessage>
+}
+
+export default function History({ initialHistory }: HistoryProps) {
   const [client, setClient] = useState<Ably.Realtime | null>(null);
 
   useEffect(() => {
@@ -27,9 +31,7 @@ export default function History() {
             docsLink="https://ably.com/docs/storage-history/history?lang=javascript"
             accentColor="amber"
           />
-          <div className="flex items-center justify-center py-24">
-            <Loader2 className="w-8 h-8 text-amber-400 animate-spin" />
-          </div>
+          <MessageDisplay historicalMessages={initialHistory} realtimeMessages={[]} />
         </div>
       </div>
     );
@@ -47,7 +49,7 @@ export default function History() {
               docsLink="https://ably.com/docs/storage-history/history?lang=javascript"
               accentColor="amber"
             />
-            <HistoryMessages />
+            <HistoryMessages initialHistory={initialHistory} />
           </div>
         </div>
       </ChannelProvider>
@@ -62,12 +64,10 @@ interface HistoryMessage {
   timestamp: string
 }
 
-function HistoryMessages() {
+function HistoryMessages({ initialHistory }: { initialHistory: Array<HistoryMessage> }) {
   const [realtimeMessages, setRealtimeMessages] = useState<Array<HistoryMessage>>([])
-  const [historicalMessages, setHistoricalMessages] = useState<Array<HistoryMessage>>([])
-  const [activeTab, setActiveTab] = useState<'history' | 'realtime'>('history')
 
-  const { channel } = useChannel("status-updates", (message: Ably.Message) => {
+  useChannel("status-updates", (message: Ably.Message) => {
     const source = message.name === 'update-from-client' ? 'client' : 'server' as const
     setRealtimeMessages(prev => [
       { id: `${Date.now()}-rt`, text: message.data.text, source, timestamp: new Date().toISOString() },
@@ -75,23 +75,11 @@ function HistoryMessages() {
     ])
   });
 
-  useEffect(() => {
-    const getHistory = async () => {
-      let history: Ably.PaginatedResult<Ably.Message> | null = await channel.history()
-      do {
-        history.items.forEach(message => {
-          const source = message.name === 'update-from-client' ? 'client' : 'server' as const
-          setHistoricalMessages(prev => [
-            ...prev,
-            { id: `${message.id}-hist`, text: message.data.text, source, timestamp: new Date(message.timestamp!).toISOString() },
-          ])
-        })
-        history = await history.next()
-      }
-      while(history)
-    }
-    getHistory()
-  }, [])
+  return <MessageDisplay historicalMessages={initialHistory} realtimeMessages={realtimeMessages} />
+}
+
+function MessageDisplay({ historicalMessages, realtimeMessages }: { historicalMessages: Array<HistoryMessage>; realtimeMessages: Array<HistoryMessage> }) {
+  const [activeTab, setActiveTab] = useState<'history' | 'realtime'>('history')
 
   const currentMessages = activeTab === 'history' ? historicalMessages : realtimeMessages
   const totalMessages = historicalMessages.length + realtimeMessages.length
