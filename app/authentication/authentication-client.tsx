@@ -1,23 +1,17 @@
 'use client'
 
-import { MouseEventHandler, MouseEvent, useState, useEffect } from 'react'
-import * as Ably from 'ably'
-import { AblyProvider, useAbly, useConnectionStateListener } from 'ably/react'
+import { MouseEventHandler, MouseEvent, useState } from 'react'
+import { useAbly, useConnectionStateListener } from 'ably/react'
 import { Shield, CheckCircle2, XCircle, Sparkles, Loader2 } from 'lucide-react'
 import { motion } from 'motion/react'
 import PageHeader from '../../components/PageHeader'
 import FeatureCard from '../../components/FeatureCard'
+import { useAblyReady } from '../ably-client-provider'
 
 export default function Authentication() {
-  const [client, setClient] = useState<Ably.Realtime | null>(null);
+  const ready = useAblyReady()
 
-  useEffect(() => {
-    const ably = new Ably.Realtime({ authUrl: '/token', authMethod: 'POST' });
-    setClient(ably);
-    return () => { ably.close(); };
-  }, []);
-
-  if (!client) {
+  if (!ready) {
     return (
       <div className="px-6 py-16">
         <div className="max-w-6xl mx-auto">
@@ -37,27 +31,25 @@ export default function Authentication() {
   }
 
   return (
-    <AblyProvider client={ client }>
-      <div className="px-6 py-16">
-        <div className="max-w-6xl mx-auto">
-          <PageHeader
-            icon={Shield}
-            title="Authentication"
-            description="Establish a secure, persistent bi-directional connection"
-            docsLink="https://ably.com/docs/getting-started/react#authenticate"
-            accentColor="cyan"
-          />
-          <ConnectionStatus />
-        </div>
+    <div className="px-6 py-16">
+      <div className="max-w-6xl mx-auto">
+        <PageHeader
+          icon={Shield}
+          title="Authentication"
+          description="Establish a secure, persistent bi-directional connection"
+          docsLink="https://ably.com/docs/getting-started/react#authenticate"
+          accentColor="cyan"
+        />
+        <ConnectionStatus />
       </div>
-    </AblyProvider>
+    </div>
   )
 }
 
 const ConnectionStatus = () => {
   const ably = useAbly();
   const [logs, setLogs] = useState<Array<string>>([])
-  const [connectionState, setConnectionState] = useState('unknown')
+  const [connectionState, setConnectionState] = useState(ably.connection.state)
 
   useConnectionStateListener((stateChange) => {
     setConnectionState(stateChange.current)

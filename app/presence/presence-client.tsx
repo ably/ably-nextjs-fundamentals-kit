@@ -1,13 +1,12 @@
 'use client'
 
-import * as Ably from 'ably';
-import names from 'random-names-generator'
-import { AblyProvider, ChannelProvider, usePresence, usePresenceListener } from "ably/react"
-import { useState, useEffect, ReactElement, FC } from 'react'
+import { useAbly, ChannelProvider, usePresence, usePresenceListener } from "ably/react"
+import { useState, ReactElement, FC } from 'react'
 import { Users, UserPlus, UserMinus, Activity, Loader2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'motion/react'
 import PageHeader from '../../components/PageHeader';
 import FeatureCard from '../../components/FeatureCard';
+import { useAblyReady } from '../ably-client-provider'
 
 const avatarColors = [
   'from-purple-500 to-pink-500',
@@ -18,21 +17,9 @@ const avatarColors = [
 ]
 
 export default function Presence() {
-  const [randomName] = useState(names.random());
-  const [isOnline, setIsOnline] = useState(false)
-  const [client, setClient] = useState<Ably.Realtime | null>(null);
+  const ready = useAblyReady()
 
-  useEffect(() => {
-    const ably = new Ably.Realtime({ authUrl: '/token', authMethod: 'POST', clientId: randomName });
-    setClient(ably);
-    return () => { ably.close(); };
-  }, [randomName]);
-
-  function toggleState(val: boolean) {
-    setIsOnline(val)
-  }
-
-  if (!client) {
+  if (!ready) {
     return (
       <div className="px-6 py-16">
         <div className="max-w-6xl mx-auto">
@@ -51,102 +38,112 @@ export default function Presence() {
     );
   }
 
+  return <PresenceInner />
+}
+
+function PresenceInner() {
+  const ably = useAbly()
+  const clientId = ably.auth.clientId
+  const [isOnline, setIsOnline] = useState(false)
+
+  function toggleState(val: boolean) {
+    setIsOnline(val)
+  }
+
   return (
-    <AblyProvider client={ client }>
-      <ChannelProvider channelName="room">
-        <div className="px-6 py-16">
-          <div className="max-w-6xl mx-auto">
-            <PageHeader
-              icon={Users}
-              title="Presence"
-              description="Track who's online in real-time"
-              docsLink="https://ably.com/docs/getting-started/react#usePresence"
-              accentColor="green"
-            />
+    <ChannelProvider channelName="room">
+      <div className="px-6 py-16">
+        <div className="max-w-6xl mx-auto">
+          <PageHeader
+            icon={Users}
+            title="Presence"
+            description="Track who's online in real-time"
+            docsLink="https://ably.com/docs/getting-started/react#usePresence"
+            accentColor="green"
+          />
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Control Panel */}
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 }}
-                className="lg:col-span-1"
-              >
-                <FeatureCard className="sticky top-24">
-                  <h2 className="text-xl font-bold text-white mb-6">Your Presence</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Control Panel */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+              className="lg:col-span-1"
+            >
+              <FeatureCard className="sticky top-24">
+                <h2 className="text-xl font-bold text-white mb-6">Your Presence</h2>
 
-                  {/* Client ID */}
-                  <div className="bg-slate-950/50 rounded-xl p-4 mb-6 border border-white/5">
-                    <div className="text-xs text-gray-500 uppercase tracking-wider mb-2">Client ID</div>
-                    <div className="text-lg font-bold text-white font-jetbrains-mono">{randomName}</div>
-                  </div>
+                {/* Client ID */}
+                <div className="bg-slate-950/50 rounded-xl p-4 mb-6 border border-white/5">
+                  <div className="text-xs text-gray-500 uppercase tracking-wider mb-2">Client ID</div>
+                  <div className="text-lg font-bold text-white font-jetbrains-mono">{clientId}</div>
+                </div>
 
-                  {/* Join/Leave Button */}
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => toggleState(!isOnline)}
-                    className={`w-full py-4 rounded-2xl font-bold text-white transition-all shadow-xl mb-6 flex items-center justify-center gap-2 ${
-                      isOnline
-                        ? 'bg-red-500 hover:bg-red-600 shadow-red-500/20'
-                        : 'bg-green-500 hover:bg-green-600 shadow-green-500/20'
-                    }`}
-                  >
-                    {isOnline ? (
-                      <><UserMinus className="w-5 h-5" />Leave Space</>
-                    ) : (
-                      <><UserPlus className="w-5 h-5" />Join Space</>
-                    )}
-                  </motion.button>
+                {/* Join/Leave Button */}
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => toggleState(!isOnline)}
+                  className={`w-full py-4 rounded-2xl font-bold text-white transition-all shadow-xl mb-6 flex items-center justify-center gap-2 ${
+                    isOnline
+                      ? 'bg-red-500 hover:bg-red-600 shadow-red-500/20'
+                      : 'bg-green-500 hover:bg-green-600 shadow-green-500/20'
+                  }`}
+                >
+                  {isOnline ? (
+                    <><UserMinus className="w-5 h-5" />Leave Space</>
+                  ) : (
+                    <><UserPlus className="w-5 h-5" />Join Space</>
+                  )}
+                </motion.button>
 
-                  {/* Stats */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 bg-slate-950/50 rounded-xl border border-white/5">
-                      <span className="text-sm text-gray-400">Your Status</span>
-                      <div className="flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-400 animate-pulse' : 'bg-gray-600'}`} />
-                        <span className={`text-sm font-bold ${isOnline ? 'text-green-400' : 'text-gray-600'}`}>
-                          {isOnline ? 'Online' : 'Offline'}
-                        </span>
-                      </div>
+                {/* Stats */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 bg-slate-950/50 rounded-xl border border-white/5">
+                    <span className="text-sm text-gray-400">Your Status</span>
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-400 animate-pulse' : 'bg-gray-600'}`} />
+                      <span className={`text-sm font-bold ${isOnline ? 'text-green-400' : 'text-gray-600'}`}>
+                        {isOnline ? 'Online' : 'Offline'}
+                      </span>
                     </div>
                   </div>
-                </FeatureCard>
-              </motion.div>
+                </div>
+              </FeatureCard>
+            </motion.div>
 
-              {/* Members List */}
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3 }}
-                className="lg:col-span-2"
-              >
-                {isOnline ? (
-                  <PresenceMessages avatarColors={avatarColors} clientId={randomName} />
-                ) : (
-                  <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl border border-white/5 overflow-hidden">
-                    <div className="bg-slate-950/50 px-6 py-4 border-b border-white/5 flex items-center justify-between">
-                      <div>
-                        <h2 className="text-lg font-bold text-white">Active Members</h2>
-                        <p className="text-sm text-gray-500">0 online now</p>
-                      </div>
-                      <Activity className="w-5 h-5 text-green-400" />
+            {/* Members List */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3 }}
+              className="lg:col-span-2"
+            >
+              {isOnline ? (
+                <PresenceMessages avatarColors={avatarColors} clientId={clientId} />
+              ) : (
+                <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl border border-white/5 overflow-hidden">
+                  <div className="bg-slate-950/50 px-6 py-4 border-b border-white/5 flex items-center justify-between">
+                    <div>
+                      <h2 className="text-lg font-bold text-white">Active Members</h2>
+                      <p className="text-sm text-gray-500">0 online now</p>
                     </div>
-                    <div className="p-6">
-                      <div className="text-center py-16">
-                        <Users className="w-12 h-12 text-gray-700 mx-auto mb-4" />
-                        <p className="text-gray-500">No one here yet</p>
-                        <p className="text-sm text-gray-600 mt-1">Join the space to see yourself</p>
-                      </div>
+                    <Activity className="w-5 h-5 text-green-400" />
+                  </div>
+                  <div className="p-6">
+                    <div className="text-center py-16">
+                      <Users className="w-12 h-12 text-gray-700 mx-auto mb-4" />
+                      <p className="text-gray-500">No one here yet</p>
+                      <p className="text-sm text-gray-600 mt-1">Join the space to see yourself</p>
                     </div>
                   </div>
-                )}
-              </motion.div>
-            </div>
+                </div>
+              )}
+            </motion.div>
           </div>
         </div>
-      </ChannelProvider>
-    </AblyProvider>
+      </div>
+    </ChannelProvider>
   )
 }
 

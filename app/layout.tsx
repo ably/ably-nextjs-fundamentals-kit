@@ -1,6 +1,7 @@
 import './global.css'
 import type { Metadata } from 'next'
 import Header from '../components/Header'
+import AblyClientProvider from './ably-client-provider'
 
 export const metadata: Metadata = {
   title: 'Ably & Next.js fundamentals kit',
@@ -18,7 +19,9 @@ export default function RootLayout({
         <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
           <Header />
           <main>
-            {children}
+            <AblyClientProvider>
+              {children}
+            </AblyClientProvider>
           </main>
         </div>
       </body>

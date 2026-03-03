@@ -1,26 +1,21 @@
 'use client'
 
-import * as Ably from 'ably';
-import { AblyProvider, ChannelProvider, useChannel } from "ably/react"
-import { useState, useEffect } from 'react'
+import { ChannelProvider, useChannel } from "ably/react"
+import * as Ably from 'ably'
+import { useState } from 'react'
 import { Clock, AlertCircle, ArrowRight, ExternalLink, Database, Sparkles, Send, Server } from 'lucide-react'
 import { motion } from 'motion/react'
 import PageHeader from '../../components/PageHeader';
+import { useAblyReady } from '../ably-client-provider'
 
 interface HistoryProps {
   initialHistory: Array<HistoryMessage>
 }
 
 export default function History({ initialHistory }: HistoryProps) {
-  const [client, setClient] = useState<Ably.Realtime | null>(null);
+  const ready = useAblyReady()
 
-  useEffect(() => {
-    const ably = new Ably.Realtime({ authUrl: '/token', authMethod: 'POST' });
-    setClient(ably);
-    return () => { ably.close(); };
-  }, []);
-
-  if (!client) {
+  if (!ready) {
     return (
       <div className="px-6 py-16">
         <div className="max-w-6xl mx-auto">
@@ -38,22 +33,20 @@ export default function History({ initialHistory }: HistoryProps) {
   }
 
   return (
-    <AblyProvider client={ client }>
-      <ChannelProvider channelName="status-updates">
-        <div className="px-6 py-16">
-          <div className="max-w-6xl mx-auto">
-            <PageHeader
-              icon={Clock}
-              title="History"
-              description="Retrieve historical messages from your channels"
-              docsLink="https://ably.com/docs/storage-history/history?lang=javascript"
-              accentColor="amber"
-            />
-            <HistoryMessages initialHistory={initialHistory} />
-          </div>
+    <ChannelProvider channelName="status-updates">
+      <div className="px-6 py-16">
+        <div className="max-w-6xl mx-auto">
+          <PageHeader
+            icon={Clock}
+            title="History"
+            description="Retrieve historical messages from your channels"
+            docsLink="https://ably.com/docs/storage-history/history?lang=javascript"
+            accentColor="amber"
+          />
+          <HistoryMessages initialHistory={initialHistory} />
         </div>
-      </ChannelProvider>
-    </AblyProvider>
+      </div>
+    </ChannelProvider>
   )
 }
 
