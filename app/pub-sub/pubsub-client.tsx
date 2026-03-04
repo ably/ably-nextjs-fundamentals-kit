@@ -1,33 +1,51 @@
 'use client'
 
-import * as Ably from 'ably';
-import { AblyProvider, ChannelProvider, useChannel } from "ably/react"
+import { ChannelProvider, useChannel } from "ably/react"
+import * as Ably from 'ably'
 import { MouseEventHandler, MouseEvent, useState } from 'react'
-import { Radio, Send, Server, MessageSquare } from 'lucide-react'
+import { Radio, Send, Server, MessageSquare, Loader2 } from 'lucide-react'
 import { motion } from 'motion/react'
 import PageHeader from '../../components/PageHeader';
 import FeatureCard from '../../components/FeatureCard';
+import { useAblyReady } from '../ably-client-provider'
 
 export default function PubSubClient() {
-  const client = new Ably.Realtime ({ authUrl: '/token', authMethod: 'POST' });
+  const ready = useAblyReady()
 
-  return (
-    <AblyProvider client={ client }>
-      <ChannelProvider channelName="status-updates">
-        <div className="px-6 py-16">
-          <div className="max-w-6xl mx-auto">
-            <PageHeader
-              icon={Radio}
-              title="Pub/Sub Channels"
-              description="Publish messages and subscribe to real-time updates"
-              docsLink="https://ably.com/docs/getting-started/react#useChannel"
-              accentColor="purple"
-            />
-            <PubSubMessages />
+  if (!ready) {
+    return (
+      <div className="px-6 py-16">
+        <div className="max-w-6xl mx-auto">
+          <PageHeader
+            icon={Radio}
+            title="Pub/Sub Channels"
+            description="Publish messages and subscribe to real-time updates"
+            docsLink="https://ably.com/docs/getting-started/react#useChannel"
+            accentColor="purple"
+          />
+          <div className="flex items-center justify-center py-24">
+            <Loader2 className="w-8 h-8 text-purple-400 animate-spin" />
           </div>
         </div>
-      </ChannelProvider>
-    </AblyProvider>
+      </div>
+    );
+  }
+
+  return (
+    <ChannelProvider channelName="status-updates">
+      <div className="px-6 py-16">
+        <div className="max-w-6xl mx-auto">
+          <PageHeader
+            icon={Radio}
+            title="Pub/Sub Channels"
+            description="Publish messages and subscribe to real-time updates"
+            docsLink="https://ably.com/docs/getting-started/react#useChannel"
+            accentColor="purple"
+          />
+          <PubSubMessages />
+        </div>
+      </div>
+    </ChannelProvider>
   )
 }
 

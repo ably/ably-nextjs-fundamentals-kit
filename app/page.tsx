@@ -1,5 +1,5 @@
-import HomeWrapper from './home-wrapper'
+import HomeClient from './home-client'
 
 export default function Home() {
-  return <HomeWrapper />
+  return <HomeClient />
 }
