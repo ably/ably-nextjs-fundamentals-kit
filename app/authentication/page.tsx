@@ -1,5 +1,5 @@
-import AuthenticationWrapper from './authentication-wrapper'
+import Authentication from './authentication-client'
 
 export default function AuthenticationPage() {
-  return <AuthenticationWrapper />
+  return <Authentication />
 }
